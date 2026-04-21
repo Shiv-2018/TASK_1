@@ -1,7 +1,7 @@
-const express = require('express');
-const http = require('http');
-const { Server } = require('socket.io');
-const cors = require('cors');
+const express = require("express");
+const http = require("http");
+const { Server } = require("socket.io");
+const cors = require("cors");
 
 const app = express();
 app.use(cors());
@@ -9,22 +9,27 @@ app.use(cors());
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:5173", // Vite default port
-    methods: ["GET", "POST"]
+    origin: "http://localhost:5173", // Check if your Vite port matches this!
+    methods: ["GET", "POST"],
   },
-  maxHttpBufferSize: 1e7 // Allow up to 10MB for images
+  maxHttpBufferSize: 1e8, // 100MB buffer for large file transfers
 });
 
-io.on('connection', (socket) => {
+io.on("connection", (socket) => {
   console.log(`User Connected: ${socket.id}`);
 
-  socket.on('send_message', (data) => {
-    // Broadcast message to everyone including sender
-    io.emit('receive_message', data);
+  // Standard message relay
+  socket.on("send_message", (data) => {
+    io.emit("receive_message", data);
   });
 
-  socket.on('disconnect', () => {
-    console.log('User Disconnected', socket.id);
+  // Packet relay for audio/large data
+  socket.on("audio_packet", (data) => {
+    io.emit("audio_packet", data);
+  });
+
+  socket.on("disconnect", () => {
+    console.log("User Disconnected", socket.id);
   });
 });
 
